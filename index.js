@@ -1,8 +1,11 @@
 // Deps
 const http = require('http');
 const url = require('url');
+const StringDecoder = require('string_decoder').StringDecoder;
 
 const PORT = 3000;
+
+const decoder = new StringDecoder('utf-8');
 
 
 // server should respond to all requests with a string
@@ -28,16 +31,49 @@ var server = http.createServer((req, res) => {
 
   // GET http headers as object
   const headers = req.headers;
-  console.log('headers', headers);
+
+  // GET the payload as a buffer, if any
+  let payload = '';
+  req.on('data', (data) => {
+    payload += decoder.write(data);
+  });
+
+  req.on('end', () => {
+    payload += decoder.end();
+
+    // select handler for request, use not found if none
+    const handler = router[resource] ? router[resource] : handlers.notFound;
+
+    const data = {
+      resource,
+      queryString,
+      method,
+      headers,
+      payload
+    };
+
+    handler(data, (statusCode, payload) => {
+      // Use the status code called back by the handler or default to 200
+      statusCode = typeof(statusCode) === 'number' ? statusCode : 200;
+
+      // Use the payload called back by the handler or default to empty object
+      payload = typeof(payload) === 'object' ? payload : {};
+
+      // stringify payload
+      const payloadString = JSON.stringify(payload);
+
+      // return response
+      res.writeHead(statusCode);
+      res.end(payloadString);
+    });
 
 
+    // LOGGING
+    console.log(`${method} ${resource}`);
+    console.log(JSON.stringify(headers, null, 2));
+    console.log('PAYLOAD', JSON.stringify(payload, null, 2));
 
-  // SEND the response
-  res.end('Hello World\n');
-
-  console.log(`Request recieved for resource: ${method} ${resource}`);
-
-
+  });
 });
 
 // start the server and listen on port 3000
@@ -45,3 +81,20 @@ var server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`Server Listening on port ${PORT}`);
 });
+
+const handlers = {};
+
+handlers.sample = (data, cb) => {
+  // callback http status code and a payload
+  cb(406, {'name': 'smaple handler'});
+};
+
+handlers.notFound = (data, cb) => {
+  cb(404);
+};
+
+
+
+const router = {
+  'sample': handlers.sample,
+};
