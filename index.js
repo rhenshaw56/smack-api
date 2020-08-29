@@ -19,14 +19,17 @@ var server = http.createServer((req, res) => {
   // Creates a resource with no trailing slashes
   const resource = path.replace(/^\/+|\/+$/g, '');
 
-  // GET quesrystring object
+  // GET quesrystring as object
   const queryString = parsedUrl.query;
-
-  console.log('queryString', queryString);
 
 
   // GET the HTTP Methhod
   const method = req.method;
+
+  // GET http headers as object
+  const headers = req.headers;
+  console.log('headers', headers);
+
 
 
   // SEND the response
