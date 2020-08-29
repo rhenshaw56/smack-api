@@ -3,7 +3,7 @@ const http = require('http');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
 
-const PORT = 3000;
+const PORT = process.env.PORT;
 
 const decoder = new StringDecoder('utf-8');
 
@@ -63,6 +63,7 @@ var server = http.createServer((req, res) => {
       const payloadString = JSON.stringify(payload);
 
       // return response
+      res.setHeader('Content-Type', 'application/json');
       res.writeHead(statusCode);
       res.end(payloadString);
     });
@@ -79,7 +80,7 @@ var server = http.createServer((req, res) => {
 // start the server and listen on port 3000
 
 server.listen(PORT, () => {
-  console.log(`Server Listening on port ${PORT}`);
+  console.log(`Server started on ${process.env.NODE_ENV} and Listening on port ${PORT}`);
 });
 
 const handlers = {};
