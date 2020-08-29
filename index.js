@@ -1,17 +1,20 @@
 // Deps
 const http = require('http');
+const https = require('https');
 const url = require('url');
+const fs = require('fs');
+
 const StringDecoder = require('string_decoder').StringDecoder;
 
 const PORT = process.env.PORT;
+const HttpPort = process.env.HttpPort;
 
 const decoder = new StringDecoder('utf-8');
 
 
 // server should respond to all requests with a string
 
-
-var server = http.createServer((req, res) => {
+const app = (req, res) => {
   // GET url and parse it
 
   const parsedUrl = url.parse(req.url, true);
@@ -75,19 +78,36 @@ var server = http.createServer((req, res) => {
     console.log('PAYLOAD', JSON.stringify(payload, null, 2));
 
   });
-});
+};
+
+const httpServer = http.createServer(app);
 
 // start the server and listen on port 3000
 
-server.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server started on ${process.env.NODE_ENV} and Listening on port ${PORT}`);
 });
 
+const httpsServerOptions = {
+  'key': fs.readFileSync('./https/key.pem'),
+  'cert': fs.readFileSync('./https/cert.pem'),
+};
+
+const httpsServer = https.createServer(httpsServerOptions, app);
+
+httpsServer.listen(HttpPort, () => {
+  console.log(`Server started on ${process.env.NODE_ENV} and Listening on port ${HttpPort}`);
+});
+
+
+
+
+
 const handlers = {};
 
-handlers.sample = (data, cb) => {
+handlers.ping = (data, cb) => {
   // callback http status code and a payload
-  cb(406, {'name': 'smaple handler'});
+  cb(200);
 };
 
 handlers.notFound = (data, cb) => {
@@ -97,5 +117,5 @@ handlers.notFound = (data, cb) => {
 
 
 const router = {
-  'sample': handlers.sample,
+  'ping': handlers.ping,
 };
