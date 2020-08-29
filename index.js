@@ -16,7 +16,13 @@ var server = http.createServer((req, res) => {
   // GET the path
   const path = parsedUrl.pathname;
 
+  // Creates a resource with no trailing slashes
   const resource = path.replace(/^\/+|\/+$/g, '');
+
+  // GET quesrystring object
+  const queryString = parsedUrl.query;
+
+  console.log('queryString', queryString);
 
 
   // GET the HTTP Methhod
