@@ -4,12 +4,22 @@ const https = require('https');
 const url = require('url');
 const fs = require('fs');
 
+const handlers = require('./lib/handlers');
+const helpers = require('./lib/helpers');
+
+
 const StringDecoder = require('string_decoder').StringDecoder;
 
 const PORT = process.env.PORT;
 const HttpPort = process.env.HttpPort;
 
 const decoder = new StringDecoder('utf-8');
+
+
+const routes = {
+  'ping': handlers.ping,
+  'users': handlers.users,
+};
 
 
 // server should respond to all requests with a string
@@ -36,28 +46,30 @@ const app = (req, res) => {
   const headers = req.headers;
 
   // GET the payload as a buffer, if any
-  let payload = '';
+  let buffer = '';
   req.on('data', (data) => {
-    payload += decoder.write(data);
+    buffer += decoder.write(data);
   });
 
   req.on('end', () => {
-    payload += decoder.end();
+    buffer += decoder.end();
 
     // select handler for request, use not found if none
-    const handler = router[resource] ? router[resource] : handlers.notFound;
+    const handler = routes[resource] ? routes[resource] : handlers.notFound;
 
     const data = {
       resource,
       queryString,
       method,
       headers,
-      payload
+      payload: helpers.parseJSONToObject(buffer),
     };
 
     handler(data, (statusCode, payload) => {
       // Use the status code called back by the handler or default to 200
       statusCode = typeof(statusCode) === 'number' ? statusCode : 200;
+
+      console.log(typeof(payload) === 'object', payload, 'object');
 
       // Use the payload called back by the handler or default to empty object
       payload = typeof(payload) === 'object' ? payload : {};
@@ -69,13 +81,14 @@ const app = (req, res) => {
       res.setHeader('Content-Type', 'application/json');
       res.writeHead(statusCode);
       res.end(payloadString);
+      
     });
 
 
     // LOGGING
-    console.log(`${method} ${resource}`);
+    console.log(`${method} /${resource}`);
     console.log(JSON.stringify(headers, null, 2));
-    console.log('PAYLOAD', JSON.stringify(payload, null, 2));
+    console.log('PAYLOAD', JSON.stringify(buffer, null, 2));
 
   });
 };
@@ -99,23 +112,3 @@ httpsServer.listen(HttpPort, () => {
   console.log(`Server started on ${process.env.NODE_ENV} and Listening on port ${HttpPort}`);
 });
 
-
-
-
-
-const handlers = {};
-
-handlers.ping = (data, cb) => {
-  // callback http status code and a payload
-  cb(200);
-};
-
-handlers.notFound = (data, cb) => {
-  cb(404);
-};
-
-
-
-const router = {
-  'ping': handlers.ping,
-};
