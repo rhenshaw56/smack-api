@@ -19,6 +19,7 @@ const decoder = new StringDecoder('utf-8');
 const routes = {
   'ping': handlers.ping,
   'users': handlers.users,
+  'auth': handlers.authenticate
 };
 
 
