@@ -19,7 +19,8 @@ const decoder = new StringDecoder('utf-8');
 const routes = {
   'ping': handlers.ping,
   'users': handlers.users,
-  'auth': handlers.authenticate
+  'auth': handlers.authenticate,
+  'checks': handlers.checks,
 };
 
 
@@ -69,8 +70,6 @@ const app = (req, res) => {
     handler(data, (statusCode, payload) => {
       // Use the status code called back by the handler or default to 200
       statusCode = typeof(statusCode) === 'number' ? statusCode : 200;
-
-      console.log(typeof(payload) === 'object', payload, 'object');
 
       // Use the payload called back by the handler or default to empty object
       payload = typeof(payload) === 'object' ? payload : {};
